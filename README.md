@@ -19,6 +19,33 @@ Coverage is mechanized: an unknown rule parameter surfaces as `coverage: unimple
 never as a silent pass. What this toolkit does *not* do is documented as prominently as
 what it does — see the Honesty section below.
 
+## How OpenAI Codex & GPT-5.6 were used
+
+This project is both **built by** and **built for** OpenAI Codex running the GPT-5.6
+family (codex-cli's default catalog: `gpt-5.6-sol` — snapshot pinned at
+[`evals/reference/models-catalog-0.144.6.json`](evals/reference/models-catalog-0.144.6.json)).
+
+- **The closed loop is driven by Codex** ([`demo/loop/`](demo/loop)): the agent solves
+  the package in Ansys SIwave, reads the physics, computes the repair (predicted the
+  61.0 pF plane capacitance in writing before solving), edits copper in the Cadence
+  database via headless SKILL, re-solves — **1824 Ω → 74 Ω (−96%)** — and an
+  independent referee, not the agent, issues the verdict. Handed a conflicting spec, it
+  produced 3 candidate fixes and the referee refused all 3: nothing shipped.
+- **The toolkit is agent-operable by design**: every capability is a headless CLI with
+  an exit-code contract (0 clean / 1 findings / 2 usage) and `--json` output;
+  [`AGENTS.md`](AGENTS.md) is the operating manual Codex loads on every session.
+- **Codex-native integration layer**: a project config layer ([`.codex/`](.codex)) with
+  spawnable specialist roles (`pkg-verifier`, `eda-runner`), repo skills
+  ([`.agents/skills/`](.agents/skills)) for the verification/diff/APD workflows, and a
+  Stop-hook that labels every agent turn.
+- **We grade GPT-5.6, deterministically**: [`evals/`](evals) is a 28-task agent-eval
+  harness (seeded-defect diagnose/fix/diff tasks, zero-LLM graders on the exit-code
+  contract) used to tune agent behavior one lever at a time —
+  plan in [`docs/codex-agent-finetune-plan.md`](docs/codex-agent-finetune-plan.md).
+- **Codex built much of pkgtk itself**, under this repo's discipline: no agent-written
+  component merges without a human-authored, hand-computed golden fixture, and every
+  coverage gap is flagged out loud instead of passing silently.
+
 ## Quickstart
 
 ```bash
